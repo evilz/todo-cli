@@ -80,32 +80,35 @@ public class AddCommandHandler
                 return 1;
             }
 
+            TodoList? list;
+
             if (string.IsNullOrEmpty(listName))
             {
-                await _todoItemRepository.AddAsync(new TodoItem
+                list = await _todoListRepository.GetDefaultListAsync();
+                if (list == null)
                 {
-                    Subject = subject,
-                    IsImportant = star,
-                });
-                _userInteraction.ShowSuccess($"Item '{subject}' added successfully.");
+                    _userInteraction.ShowError("Default list not found. Please specify a list.");
+                    return 1;
+                }
             }
             else
             {
-                var list = await _todoListRepository.GetByNameAsync(listName);
+                list = await _todoListRepository.GetByNameAsync(listName);
                 if (list == null)
                 {
                     _userInteraction.ShowError($"No list found with the name '{listName}'.");
                     return 1;
                 }
-
-                await _todoItemRepository.AddAsync(new TodoItem
-                {
-                    Subject = subject,
-                    ListId = list.Id,
-                    IsImportant = star
-                });
-                _userInteraction.ShowSuccess($"Item '{subject}' added to list '{listName}' successfully.");
             }
+
+            await _todoItemRepository.AddAsync(new TodoItem
+            {
+                Subject = subject,
+                ListId = list.Id,
+                IsImportant = star
+            });
+
+            _userInteraction.ShowSuccess($"Item '{subject}' added to list '{list.Name}' successfully.");
             return 0;
         }
         catch (Exception ex)

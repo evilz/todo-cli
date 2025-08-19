@@ -137,10 +137,16 @@ public class AddCommandTests
     }
 
     [Fact]
-    public async Task AddItem_WithoutList_ShouldCreateItemWithoutList()
+    public async Task AddItem_WithoutListName_ShouldUseDefaultList()
     {
         // Arrange
         var subject = "Test Item";
+        var defaultListId = "default-list-123";
+        var defaultList = new TodoList { Id = defaultListId, Name = "Default List" };
+
+        _mockListRepository.Setup(r => r.GetDefaultListAsync())
+            .ReturnsAsync(defaultList);
+
         var command = new AddCommand(_serviceProvider);
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
@@ -151,8 +157,29 @@ public class AddCommandTests
         Assert.Equal(0, result);
         _mockItemRepository.Verify(r => r.AddAsync(It.Is<TodoItem>(i =>
             i.Subject == subject &&
-            i.ListId == null &&
+            i.ListId == defaultListId &&
             !i.IsImportant)), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddItem_WithoutListName_AndNoDefaultList_ShouldShowError()
+    {
+        // Arrange
+        var subject = "Test Item";
+
+        _mockListRepository.Setup(r => r.GetDefaultListAsync())
+            .ReturnsAsync((TodoList)null);
+
+        var command = new AddCommand(_serviceProvider);
+        var handler = AddCommandHandler.Item.Create(_serviceProvider);
+
+        // Act
+        var result = await handler(subject, null, false);
+
+        // Assert
+        Assert.Equal(1, result);
+        _mockUserInteraction.Verify(ui => ui.ShowError("Default list not found. Please specify a list."), Times.Once);
+        _mockItemRepository.Verify(r => r.AddAsync(It.IsAny<TodoItem>()), Times.Never);
     }
 
     [Fact]
