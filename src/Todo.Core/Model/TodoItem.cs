@@ -5,6 +5,7 @@ public class TodoItem
     public string? Id { get; set; }
     public string? Subject { get; set; }
     public bool IsCompleted { get; set; }
+    public bool IsImportant { get; set; }
     public string Status { get; set; } = "NotStarted";
     public DateTime? Completed { get; set; }
     public DateTime? Created { get; set; }

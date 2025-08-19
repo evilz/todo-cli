@@ -31,6 +31,32 @@ public class AddCommandTests
     }
 
     [Fact]
+    public async Task AddItem_WithStarOption_ShouldCreateImportantItem()
+    {
+        // Arrange
+        var listName = "Test List";
+        var subject = "Test Item";
+        var listId = "list-123";
+        var list = new TodoList { Id = listId, Name = listName };
+
+        _mockListRepository.Setup(r => r.GetByNameAsync(listName))
+            .ReturnsAsync(list);
+
+        var command = new AddCommand(_serviceProvider);
+        var handler = AddCommandHandler.Item.Create(_serviceProvider);
+
+        // Act
+        var result = await handler(listName, subject, true);
+
+        // Assert
+        Assert.Equal(0, result);
+        _mockItemRepository.Verify(r => r.AddAsync(It.Is<TodoItem>(i =>
+            i.Subject == subject &&
+            i.ListId == listId &&
+            i.IsImportant)), Times.Once);
+    }
+
+    [Fact]
     public async Task AddList_WithValidName_ShouldCreateList()
     {
         // Arrange
@@ -78,13 +104,14 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(listName, subject);
+        var result = await handler(listName, subject, false);
 
         // Assert
         Assert.Equal(0, result);
         _mockItemRepository.Verify(r => r.AddAsync(It.Is<TodoItem>(i => 
             i.Subject == subject && 
-            i.ListId == listId)), Times.Once);
+            i.ListId == listId &&
+            !i.IsImportant)), Times.Once);
     }
 
     [Fact]
@@ -101,7 +128,7 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(listName, subject);
+        var result = await handler(listName, subject, false);
 
         // Assert
         Assert.Equal(1, result);
@@ -118,7 +145,7 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(string.Empty, subject);
+        var result = await handler(string.Empty, subject, false);
 
         // Assert
         Assert.Equal(1, result);
@@ -135,7 +162,7 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(listName, string.Empty);
+        var result = await handler(listName, string.Empty, false);
 
         // Assert
         Assert.Equal(1, result);

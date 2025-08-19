@@ -26,6 +26,7 @@ public static class TodoDependencyInjectionExtensions
             Id = task.Id,
             Subject = task.Title,
             IsCompleted = task.Status == Microsoft.Graph.Models.TaskStatus.Completed,
+            IsImportant = task.Importance == Importance.High,
             Status = task.Status?.ToString() ?? "Unknown",
             Completed = task.CompletedDateTime?.ToDateTime(),
             Created = task.CreatedDateTime?.DateTime,

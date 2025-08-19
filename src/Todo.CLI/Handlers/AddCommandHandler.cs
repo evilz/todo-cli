@@ -36,7 +36,7 @@ public class AddCommandHandler
 
     public class Item
     {
-        public static Func<string, string, Task<int>> Create(IServiceProvider serviceProvider)
+        public static Func<string, string, bool, Task<int>> Create(IServiceProvider serviceProvider)
         {
             var todoListRepository = serviceProvider.GetRequiredService<ITodoListRepository>();
             var todoItemRepository = serviceProvider.GetRequiredService<ITodoItemRepository>();
@@ -70,7 +70,7 @@ public class AddCommandHandler
         }
     }
 
-    private async Task<int> HandleItemAsync(string listName, string subject)
+    private async Task<int> HandleItemAsync(string listName, string subject, bool star)
     {
         try
         {
@@ -96,7 +96,8 @@ public class AddCommandHandler
             await _todoItemRepository.AddAsync(new TodoItem
             {
                 Subject = subject,
-                ListId = list.Id
+                ListId = list.Id,
+                IsImportant = star
             });
             _userInteraction.ShowSuccess($"Item '{subject}' added to list '{listName}' successfully.");
             return 0;
