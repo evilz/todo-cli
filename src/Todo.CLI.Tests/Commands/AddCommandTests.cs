@@ -46,7 +46,7 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(listName, subject, true);
+        var result = await handler(subject, listName, true);
 
         // Assert
         Assert.Equal(0, result);
@@ -104,12 +104,12 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(listName, subject, false);
+        var result = await handler(subject, listName, false);
 
         // Assert
         Assert.Equal(0, result);
-        _mockItemRepository.Verify(r => r.AddAsync(It.Is<TodoItem>(i => 
-            i.Subject == subject && 
+        _mockItemRepository.Verify(r => r.AddAsync(It.Is<TodoItem>(i =>
+            i.Subject == subject &&
             i.ListId == listId &&
             !i.IsImportant)), Times.Once);
     }
@@ -128,7 +128,7 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(listName, subject, false);
+        var result = await handler(subject, listName, false);
 
         // Assert
         Assert.Equal(1, result);
@@ -137,7 +137,7 @@ public class AddCommandTests
     }
 
     [Fact]
-    public async Task AddItem_WithEmptyListName_ShouldShowError()
+    public async Task AddItem_WithoutList_ShouldCreateItemWithoutList()
     {
         // Arrange
         var subject = "Test Item";
@@ -145,12 +145,14 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(string.Empty, subject, false);
+        var result = await handler(subject, null, false);
 
         // Assert
-        Assert.Equal(1, result);
-        _mockUserInteraction.Verify(ui => ui.ShowError("List name is required to add an item."), Times.Once);
-        _mockItemRepository.Verify(r => r.AddAsync(It.IsAny<TodoItem>()), Times.Never);
+        Assert.Equal(0, result);
+        _mockItemRepository.Verify(r => r.AddAsync(It.Is<TodoItem>(i =>
+            i.Subject == subject &&
+            i.ListId == null &&
+            !i.IsImportant)), Times.Once);
     }
 
     [Fact]
@@ -162,7 +164,7 @@ public class AddCommandTests
         var handler = AddCommandHandler.Item.Create(_serviceProvider);
 
         // Act
-        var result = await handler(listName, string.Empty, false);
+        var result = await handler(string.Empty, listName, false);
 
         // Assert
         Assert.Equal(1, result);

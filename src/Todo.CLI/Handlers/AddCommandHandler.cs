@@ -70,36 +70,42 @@ public class AddCommandHandler
         }
     }
 
-    private async Task<int> HandleItemAsync(string listName, string subject, bool star)
+    private async Task<int> HandleItemAsync(string subject, string listName, bool star)
     {
         try
         {
-            if (string.IsNullOrEmpty(listName))
-            {
-                _userInteraction.ShowError("List name is required to add an item.");
-                return 1;
-            }
-
             if (string.IsNullOrEmpty(subject))
             {
                 _userInteraction.ShowError("Subject is required to add an item.");
                 return 1;
             }
 
-            var list = await _todoListRepository.GetByNameAsync(listName);
-            if (list == null)
+            if (string.IsNullOrEmpty(listName))
             {
-                _userInteraction.ShowError($"No list found with the name '{listName}'.");
-                return 1;
+                await _todoItemRepository.AddAsync(new TodoItem
+                {
+                    Subject = subject,
+                    IsImportant = star,
+                });
+                _userInteraction.ShowSuccess($"Item '{subject}' added successfully.");
             }
-
-            await _todoItemRepository.AddAsync(new TodoItem
+            else
             {
-                Subject = subject,
-                ListId = list.Id,
-                IsImportant = star
-            });
-            _userInteraction.ShowSuccess($"Item '{subject}' added to list '{listName}' successfully.");
+                var list = await _todoListRepository.GetByNameAsync(listName);
+                if (list == null)
+                {
+                    _userInteraction.ShowError($"No list found with the name '{listName}'.");
+                    return 1;
+                }
+
+                await _todoItemRepository.AddAsync(new TodoItem
+                {
+                    Subject = subject,
+                    ListId = list.Id,
+                    IsImportant = star
+                });
+                _userInteraction.ShowSuccess($"Item '{subject}' added to list '{listName}' successfully.");
+            }
             return 0;
         }
         catch (Exception ex)
