@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  SOLUTION_FILE: ${{ github.workspace }}/src/Todo.CLI.sln
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_FILE }}
+
+    - name: Build solution
+      run: dotnet build ${{ env.SOLUTION_FILE }} --configuration Release
+
+    - name: Run tests
+      run: dotnet test ${{ env.SOLUTION_FILE }} --configuration Release --no-build --verbosity normal
+
+  package-linux:
+    name: Package Linux x64
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Build Linux x64 (self-contained)
+      run: |
+        dotnet publish src/Todo.CLI/Todo.CLI.csproj \
+          --configuration Release \
+          --runtime linux-x64 \
+          --framework net10.0 \
+          --self-contained true \
+          --output ${{ github.workspace }}/publish/linux-x64
+
+    - name: Create tarball
+      run: |
+        cd ${{ github.workspace }}/publish/linux-x64
+        tar -czf todo-linux-x64-${{ github.run_id }}.tar.gz .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: todo-linux-x64
+        path: ${{ github.workspace }}/publish/linux-x64/todo-linux-x64-${{ github.run_id }}.tar.gz
+
+  package-windows:
+    name: Package Windows x64
+    needs: build
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Build Windows x64 (self-contained)
+      run: |
+        dotnet publish src/Todo.CLI/Todo.CLI.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --framework net10.0 `
+          --self-contained true `
+          --output ${{ github.workspace }}/publish/win-x64
+
+    - name: Create zip
+      working-directory: ${{ github.workspace }}/publish/win-x64
+      run: Compress-Archive -Path * -DestinationPath todo-win-x64-${{ github.run_id }}.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: todo-win-x64
+        path: ${{ github.workspace }}/publish/win-x64/todo-win-x64-${{ github.run_id }}.zip
+
+  package-osx:
+    name: Package macOS x64
+    needs: build
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Build macOS x64 (self-contained)
+      run: |
+        dotnet publish src/Todo.CLI/Todo.CLI.csproj \
+          --configuration Release \
+          --runtime osx-x64 \
+          --framework net10.0 \
+          --self-contained true \
+          --output ${{ github.workspace }}/publish/osx-x64
+
+    - name: Create tarball
+      run: |
+        cd ${{ github.workspace }}/publish/osx-x64
+        tar -czf todo-osx-x64-${{ github.run_id }}.tar.gz .
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: todo-osx-x64
+        path: ${{ github.workspace }}/publish/osx-x64/todo-osx-x64-${{ github.run_id }}.tar.gz
+
+  release:
+    name: Create Release
+    needs: [package-linux, package-windows, package-osx]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ${{ github.workspace }}/artifacts
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          ${{ github.workspace }}/artifacts/**/*.tar.gz
+          ${{ github.workspace }}/artifacts/**/*.zip
+        generate_release_notes: true
