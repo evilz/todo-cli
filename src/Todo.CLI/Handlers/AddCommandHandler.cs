@@ -11,11 +11,11 @@ public class AddCommandHandler
 {
     private readonly IUserInteraction _userInteraction;
     private readonly ITodoListRepository _todoListRepository;
-    private readonly ITodoItemRepository _todoItemRepository;
+    private readonly ITodoItemRepository? _todoItemRepository;
 
     private AddCommandHandler(
         ITodoListRepository todoListRepository,
-        ITodoItemRepository todoItemRepository,
+        ITodoItemRepository? todoItemRepository,
         IUserInteraction userInteraction)
     {
         _todoListRepository = todoListRepository;
@@ -99,6 +99,12 @@ public class AddCommandHandler
                     _userInteraction.ShowError($"No list found with the name '{listName}'.");
                     return 1;
                 }
+            }
+
+            if (_todoItemRepository == null)
+            {
+                _userInteraction.ShowError("Cannot add item: item repository is not available.");
+                return 1;
             }
 
             await _todoItemRepository.AddAsync(new TodoItem
