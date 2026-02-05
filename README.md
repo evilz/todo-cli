@@ -137,5 +137,5 @@ MIT License
 Built with:
 - [.NET 10](https://github.com/dotnet/core)
 - [System.CommandLine](https://github.com/dotnet/command-line-api)
-- [Microsoft Graph SDK](https://github.com/microsoftgraph/msgraph-beta-sdk-dotnet)
+- [Microsoft Graph SDK](https://github.com/microsoftgraph/msgraph-sdk-dotnet)
 - [Inquirer.cs](https://github.com/hayer/Inquirer.cs)

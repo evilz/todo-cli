@@ -25,7 +25,6 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>embedded</DebugType>
-    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <!-- Linux x64 Release -->

@@ -6,11 +6,11 @@ using Xunit;
 
 namespace Todo.CLI.Tests.Commands;
 
-public class AddCommandTests
+public abstract class CommandTestsBase
 {
-    private readonly ServiceProvider _serviceProvider;
+    protected readonly ServiceProvider _serviceProvider;
 
-    public AddCommandTests()
+    protected CommandTestsBase()
     {
         _serviceProvider = new ServiceCollection()
             .AddSingleton<TodoCliConfiguration>()
@@ -18,6 +18,10 @@ public class AddCommandTests
             .AddSingleton<IUserInteraction>(new MockUserInteraction())
             .BuildServiceProvider();
     }
+}
+
+public class AddCommandTests : CommandTestsBase
+{
 
     [Fact]
     public void AddCommand_ShouldHaveCorrectName()
@@ -40,46 +44,38 @@ public class AddCommandTests
     }
 
     [Fact]
-    public void AddCommand_ShouldAcceptTitleArgument()
+    public void AddItemCommand_ShouldAcceptSubjectArgument()
     {
         // Arrange
         var command = new AddCommand(_serviceProvider);
+        var itemSubCommand = command.Subcommands.Single(c => c.Name == "item");
 
         // Act
-        var titleArgument = command.Children.OfType<Argument>().FirstOrDefault(a => a.Name == "title");
+        var subjectArgument = itemSubCommand.Arguments.SingleOrDefault(a => a.Name == "subject");
 
         // Assert
-        Assert.NotNull(titleArgument);
+        Assert.NotNull(subjectArgument);
     }
 
     [Fact]
-    public void AddCommand_ShouldAcceptFlags()
+    public void AddItemCommand_ShouldAcceptListAndStarOptions()
     {
         // Arrange
         var command = new AddCommand(_serviceProvider);
+        var itemSubCommand = command.Subcommands.Single(c => c.Name == "item");
 
         // Act
-        var importanceOption = command.Children.OfType<Option>().FirstOrDefault(o => o.Name == "importance");
-        var listOption = command.Children.OfType<Option>().FirstOrDefault(o => o.Name == "list");
+        var listOption = itemSubCommand.Options.SingleOrDefault(o => o.Name == "list");
+        var starOption = itemSubCommand.Options.SingleOrDefault(o => o.Name == "star");
 
         // Assert
-        Assert.NotNull(importanceOption);
         Assert.NotNull(listOption);
+        Assert.NotNull(starOption);
     }
 }
 
-public class ListCommandTests
+public class ListCommandTests : CommandTestsBase
 {
-    private readonly ServiceProvider _serviceProvider;
-
-    public ListCommandTests()
-    {
-        _serviceProvider = new ServiceCollection()
-            .AddSingleton<TodoCliConfiguration>()
-            .AddTodoRepositories()
-            .AddSingleton<IUserInteraction>(new MockUserInteraction())
-            .BuildServiceProvider();
-    }
 
     [Fact]
     public void ListCommand_ShouldHaveCorrectName()
@@ -105,18 +101,8 @@ public class ListCommandTests
     }
 }
 
-public class CompleteCommandTests
+public class CompleteCommandTests : CommandTestsBase
 {
-    private readonly ServiceProvider _serviceProvider;
-
-    public CompleteCommandTests()
-    {
-        _serviceProvider = new ServiceCollection()
-            .AddSingleton<TodoCliConfiguration>()
-            .AddTodoRepositories()
-            .AddSingleton<IUserInteraction>(new MockUserInteraction())
-            .BuildServiceProvider();
-    }
 
     [Fact]
     public void CompleteCommand_ShouldHaveCorrectName()
@@ -142,19 +128,8 @@ public class CompleteCommandTests
     }
 }
 
-public class RemoveCommandTests
+public class RemoveCommandTests : CommandTestsBase
 {
-    private readonly ServiceProvider _serviceProvider;
-
-    public RemoveCommandTests()
-    {
-        _serviceProvider = new ServiceCollection()
-            .AddSingleton<TodoCliConfiguration>()
-            .AddTodoRepositories()
-            .AddSingleton<IUserInteraction>(new MockUserInteraction())
-            .BuildServiceProvider();
-    }
-
     [Fact]
     public void RemoveCommand_ShouldHaveCorrectName()
     {
@@ -166,13 +141,14 @@ public class RemoveCommandTests
     }
 
     [Fact]
-    public void RemoveCommand_ShouldRequireIdArgument()
+    public void RemoveItemCommand_ShouldRequireIdArgument()
     {
         // Arrange
         var command = new RemoveCommand(_serviceProvider);
+        var itemSubCommand = command.Subcommands.Single(c => c.Name == "item");
 
         // Act
-        var idArgument = command.Children.OfType<Argument>().FirstOrDefault(a => a.Name == "id");
+        var idArgument = itemSubCommand.Arguments.SingleOrDefault(a => a.Name == "id");
 
         // Assert
         Assert.NotNull(idArgument);
