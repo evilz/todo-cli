@@ -67,6 +67,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
+        retention-days: 1
         name: todo-linux-x64
         path: ${{ github.workspace }}/publish/todo-linux-x64-${{ github.run_id }}.tar.gz
 
@@ -100,6 +101,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
+        retention-days: 1
         name: todo-win-x64
         path: ${{ github.workspace }}/publish/win-x64/todo-win-x64-${{ github.run_id }}.zip
 
@@ -134,6 +136,7 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
+        retention-days: 1
         name: todo-osx-x64
         path: ${{ github.workspace }}/publish/osx-x64/todo-osx-x64-${{ github.run_id }}.tar.gz
 
